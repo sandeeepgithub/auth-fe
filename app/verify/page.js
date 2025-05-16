@@ -5,21 +5,22 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 
 const VerifyPage = () => {
+  const [email, setEmail] = useState("");
   const [otp, setOtp] = useState(["", "", "", ""]);
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [message, setMessage] = useState("");
 
   const inputsRef = useRef([]);
-  const router = useRouter;
+  const router = useRouter();
 
   const handleChange = (index, value) => {
-    if (!/^\d?$/.test(value)) return; // Only allow digits
+    if (!/^\d?$/.test(value)) return;
 
     const updatedOtp = [...otp];
     updatedOtp[index] = value;
     setOtp(updatedOtp);
 
-    // Focus next input if value entered
     if (value && index < 3) {
       inputsRef.current[index + 1]?.focus();
     }
@@ -32,18 +33,22 @@ const VerifyPage = () => {
   };
 
   const handleSubmit = async (e) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("No token found");
-      setLoading(false);
-      return;
-    }
-
     e.preventDefault();
     const enteredOtp = otp.join("");
 
+    if (!email) {
+      setMessage("Please enter your email");
+      return;
+    }
+
     if (enteredOtp.length !== 4) {
       setMessage("Please enter a valid 4-digit OTP");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setMessage("No token found");
       return;
     }
 
@@ -53,9 +58,7 @@ const VerifyPage = () => {
     try {
       const res = await axios.patch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/verifyotp`,
-        {
-          otp: enteredOtp,
-        },
+        { otp: enteredOtp, email },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -64,11 +67,38 @@ const VerifyPage = () => {
       );
 
       setMessage("OTP Verified!");
-      router.replace("/login");
+      router.replace("/");
     } catch (err) {
       setMessage(err.response?.data?.message || "OTP verification failed");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (!email) {
+      setMessage("Please enter your email to resend OTP");
+      return;
+    }
+
+    setResending(true);
+    setMessage("");
+
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/sendOtp`,
+        {
+          email,
+        }
+      );
+      setMessage("OTP resent successfully");
+
+      const token = res.data.token;
+      localStorage.setItem("token", token);
+    } catch (err) {
+      setMessage(err.response?.data?.message || "Failed to resend OTP");
+    } finally {
+      setResending(false);
     }
   };
 
@@ -80,6 +110,24 @@ const VerifyPage = () => {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label
+              htmlFor="email"
+              className="block mb-1 font-medium text-gray-700 dark:text-gray-300"
+            >
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="you@example.com"
+            />
+          </div>
+
           <div className="flex justify-between space-x-2">
             {otp.map((digit, i) => (
               <input
@@ -103,6 +151,15 @@ const VerifyPage = () => {
             {loading ? "Verifying..." : "Verify OTP"}
           </button>
         </form>
+
+        <button
+          type="button"
+          onClick={handleResendOtp}
+          disabled={resending}
+          className="mt-4 w-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-medium py-2 px-4 rounded-md transition disabled:opacity-50"
+        >
+          {resending ? "Resending..." : "Resend OTP"}
+        </button>
 
         {message && (
           <p className="mt-4 text-center text-sm text-red-600 dark:text-red-400">

@@ -1,15 +1,18 @@
-// middleware.ts
 import { NextResponse } from "next/server";
 
 export function middleware(request) {
   const token = request.cookies.get("token")?.value;
   const pathname = request.nextUrl.pathname;
 
-  if (!token && pathname !== "/login") {
+  const isLoggedIn = Boolean(token);
+
+  const publicPaths = ["/login", "/register", "/verify"];
+
+  if (!isLoggedIn && !publicPaths.includes(pathname)) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (token && pathname === "/login") {
+  if (isLoggedIn && pathname !== "/") {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
@@ -17,5 +20,5 @@ export function middleware(request) {
 }
 
 export const config = {
-  matcher: ["/", "/login"], // ⬅️ Protect these routes
+  matcher: ["/((?!_next|favicon.ico).*)"],
 };
