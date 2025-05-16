@@ -36,11 +36,6 @@ const VerifyPage = () => {
     e.preventDefault();
     const enteredOtp = otp.join("");
 
-    if (!email) {
-      setMessage("Please enter your email");
-      return;
-    }
-
     if (enteredOtp.length !== 4) {
       setMessage("Please enter a valid 4-digit OTP");
       return;
@@ -58,7 +53,7 @@ const VerifyPage = () => {
     try {
       const res = await axios.patch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/verifyotp`,
-        { otp: enteredOtp, email },
+        { otp: enteredOtp },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -87,12 +82,10 @@ const VerifyPage = () => {
     try {
       const res = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/sendOtp`,
-        {
-          email,
-        }
+        { email }
       );
-      setMessage("OTP resent successfully");
 
+      setMessage("OTP resent successfully");
       const token = res.data.token;
       localStorage.setItem("token", token);
     } catch (err) {
@@ -115,14 +108,13 @@ const VerifyPage = () => {
               htmlFor="email"
               className="block mb-1 font-medium text-gray-700 dark:text-gray-300"
             >
-              Email
+              Email (only needed to resend OTP)
             </label>
             <input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="you@example.com"
             />

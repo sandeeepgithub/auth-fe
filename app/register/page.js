@@ -12,13 +12,15 @@ const RegisterPage = () => {
     password: "",
     firstName: "",
     lastName: "",
-    countryCode: 91,
+    countryCode: "",
     contact: "",
     dob: "",
   });
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+
+  const validCountryCodes = [91, 1, 44, 61, 81]; // Add more valid country codes as needed
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,10 +30,35 @@ const RegisterPage = () => {
     }));
   };
 
+  const isFutureDate = (dateStr) => {
+    const today = new Date();
+    const inputDate = new Date(dateStr);
+    return inputDate > today;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
+
+    // ✅ Custom Validations
+    if (!validCountryCodes.includes(Number(form.countryCode))) {
+      setMessage("Invalid country code");
+      setLoading(false);
+      return;
+    }
+
+    if (form.contact.length < 8 || form.contact.length > 15) {
+      setMessage("Contact must be between 8 and 15 characters");
+      setLoading(false);
+      return;
+    }
+
+    if (isFutureDate(form.dob)) {
+      setMessage("Date of birth cannot be in the future");
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await axios.post(
@@ -46,24 +73,11 @@ const RegisterPage = () => {
 
       if (res.status === 200) {
         setMessage("Registration successful!");
-        const data = res.data.data;
-
-        setForm({
-          email: "",
-          password: "",
-          firstName: "",
-          lastName: "",
-          countryCode: "",
-          contact: "",
-          dob: "",
-        });
-
         localStorage.setItem("token", res.data.token);
-
         router.push("/verify");
+      } else {
+        throw new Error("Unexpected error");
       }
-
-      throw new Error(res);
     } catch (err) {
       setMessage(err.response?.data?.message || "Registration failed");
     } finally {
@@ -84,7 +98,7 @@ const RegisterPage = () => {
             { label: "Email", name: "email", type: "email" },
             { label: "Password", name: "password", type: "password" },
             { label: "Country Code", name: "countryCode", type: "number" },
-            { label: "Contact", name: "contact", type: "text" },
+            { label: "Contact", name: "contact", type: "number" },
             { label: "Date of Birth", name: "dob", type: "date" },
           ].map(({ label, name, type }) => (
             <div key={name}>
