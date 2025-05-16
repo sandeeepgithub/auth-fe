@@ -6,7 +6,13 @@ export function middleware(request) {
 
   const isLoggedIn = Boolean(token);
 
-  const publicPaths = ["/login", "/register", "/verify"];
+  const publicPaths = [
+    "/login",
+    "/register",
+    "/verify",
+    "/change-password",
+    "/reset-password",
+  ];
 
   if (!isLoggedIn && !publicPaths.includes(pathname)) {
     return NextResponse.redirect(new URL("/login", request.url));
