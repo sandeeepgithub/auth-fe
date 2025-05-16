@@ -3,14 +3,10 @@ import axios from "axios";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { signIn, signOut, useSession } from "next-auth/react";
 import LoadingSpinner from "../components/Loading";
 
 const LoginComponent = () => {
   const router = useRouter();
-  const { data: session } = useSession();
-
-  console.log({ session });
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -142,25 +138,6 @@ const LoginComponent = () => {
             <span className="font-semibold">Register</span>
           </Link>
         </form>
-        <div className="p-4">
-          {!session ? (
-            <button
-              onClick={() => signIn("google")}
-              className="px-4 py-2 bg-blue-500 text-white rounded"
-            >
-              Sign in with Google
-            </button>
-          ) : (
-            <div>
-              <button
-                onClick={() => signOut()}
-                className="px-4 py-2 bg-red-500 text-white rounded"
-              >
-                Sign out
-              </button>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );
