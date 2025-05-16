@@ -27,10 +27,9 @@ const LoginComponent = () => {
         const data = res.data;
 
         localStorage.setItem("token", data.token);
+        router.push("/");
         document.cookie = `token=${data.token}; path=/`;
         setLoading(false);
-
-        router.push("/");
       })
       .catch((err) => {
         const message = err.response.data.message;
